@@ -1,4 +1,5 @@
 mod routes;
+pub mod schema;
 
 use rocket::{build, launch, Build, Rocket};
 use routes::{catchers, routes};
