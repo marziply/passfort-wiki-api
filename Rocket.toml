@@ -1,0 +1,2 @@
+[default.databases.wiki]
+url = "assets/wiki.db"
