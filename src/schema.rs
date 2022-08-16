@@ -1,19 +1,25 @@
-use chrono::{DateTime, FixedOffset};
-use serde::{Deserialize, Serialize};
+use chrono::NaiveDateTime;
+use serde::Serialize;
+use sqlx::FromRow;
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Serialize, FromRow)]
 pub struct Document {
-  pub rowid: u64,
+  pub id: String,
   pub title: String,
   pub content: String,
-  pub created_at: DateTime<FixedOffset>,
-  pub revisions: Vec<Revision>,
+  pub created_at: NaiveDateTime,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Serialize, FromRow)]
 pub struct Revision {
-  pub rowid: u64,
-  pub document_id: u64,
+  pub id: String,
+  pub document_id: String,
   pub content: String,
-  pub created_at: DateTime<FixedOffset>,
+  pub created_at: NaiveDateTime,
+}
+
+#[derive(Debug, Default, Serialize)]
+pub struct DocumentWithRevisions {
+  pub document: Document,
+  pub revisions: Vec<Revision>,
 }
