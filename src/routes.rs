@@ -14,6 +14,8 @@ use uuid::Uuid;
 
 type DB = Connection<WikiDatabase>;
 
+static TITLE_LEN: usize = 50;
+
 #[derive(Debug)]
 enum Timestamp {
   At(DateTime<Utc>),
@@ -23,11 +25,12 @@ enum Timestamp {
 #[derive(Debug, Default, Deserialize)]
 struct Identifier(String);
 
+// Limit the max character count in the title parameter to 50
 impl<'r> FromParam<'r> for Identifier {
   type Error = ValidationError<'r>;
 
   fn from_param(param: &'r str) -> Result<Self, Self::Error> {
-    if param.chars().count() > 50 {
+    if param.chars().count() > TITLE_LEN {
       return Err(ValidationError::validation("Invalid title length"));
     }
 
@@ -35,6 +38,7 @@ impl<'r> FromParam<'r> for Identifier {
   }
 }
 
+// Handle dates with either a timestamp/date or with the literal value `latest`
 impl<'r> FromParam<'r> for Timestamp {
   type Error = ParseError;
 
