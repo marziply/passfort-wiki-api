@@ -994,7 +994,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "passfort-wiki-api"
+name = "passfort_wiki_api"
 version = "0.1.0"
 dependencies = [
  "chrono",

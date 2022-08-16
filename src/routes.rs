@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use crate::schema::{Document, DocumentWithRevisions, NewDocument, Revision};
 use crate::WikiDatabase;
 use chrono::{DateTime, ParseError, Utc};
@@ -54,7 +57,7 @@ impl<'r> FromParam<'r> for Timestamp {
 }
 
 async fn fetch_document(db: &mut DB, identifier: Identifier) -> Document {
-  let title = identifier.0.replace("-", " ");
+  let title = identifier.0.replace('-', " ");
 
   query_as!(
     Document,
@@ -82,7 +85,7 @@ async fn list_documents(
   query_as!(Document, "SELECT * FROM documents")
     .fetch_all(&mut *db)
     .await
-    .map_or_else(|_| Json(Vec::new()), |v| Json(v))
+    .map_or_else(|_| Json(Vec::new()), Json)
 }
 
 #[get("/documents/<identifier>")]
@@ -146,7 +149,7 @@ async fn get_document_at(
       )
       .fetch_one(&mut *db)
       .await
-      .map_or_else(|_| Json(Revision::default()), |v| Json(v))
+      .map_or_else(|_| Json(Revision::default()), Json)
     }
     // Cast a Document to a Revision as they're effectively the same thing
     // at this point in the query
@@ -166,7 +169,7 @@ async fn new_document(
   document: Json<NewDocument>,
 ) -> Json<Document> {
   let id = Uuid::new_v4().to_string();
-  let title = identifier.0.replace("-", " ");
+  let title = identifier.0.replace('-', " ");
 
   query_as!(
     Document,
@@ -181,7 +184,7 @@ async fn new_document(
   )
   .fetch_one(&mut *db)
   .await
-  .map_or_else(|_| Json(Document::default()), |v| Json(v))
+  .map_or_else(|_| Json(Document::default()), Json)
 }
 
 #[catch(404)]
