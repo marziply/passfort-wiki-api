@@ -7,6 +7,7 @@ pub struct Document {
   pub id: String,
   pub title: String,
   pub content: String,
+  pub updated_at: NaiveDateTime,
   pub created_at: NaiveDateTime,
 }
 

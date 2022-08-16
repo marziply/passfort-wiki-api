@@ -1,26 +1,33 @@
 use crate::schema::{Document, DocumentWithRevisions, Revision};
 use crate::WikiDatabase;
-use chrono::ParseError;
+use chrono::{DateTime, ParseError, Utc};
 use rocket::http::Status;
 use rocket::request::FromParam;
 use rocket::serde::json::Json;
 use rocket::{catch, catchers, get, post, routes, Catcher, Request, Route};
 use rocket_db_pools::Connection;
 use sqlx::query_as;
-use sqlx::types::chrono::{DateTime, Utc};
+use std::str::FromStr;
 
 type DB = Connection<WikiDatabase>;
 
 #[derive(Debug)]
-struct Timestamp(pub DateTime<Utc>);
+enum Timestamp {
+  At(DateTime<Utc>),
+  Latest,
+}
 
 impl<'r> FromParam<'r> for Timestamp {
   type Error = ParseError;
 
   fn from_param(param: &'r str) -> Result<Timestamp, Self::Error> {
-    let date = DateTime::parse_from_rfc3339(param)?;
+    let date = if param == "latest" {
+      Timestamp::Latest
+    } else {
+      Timestamp::At(DateTime::from_str(param).unwrap_or_default())
+    };
 
-    Ok(Timestamp(DateTime::from(date)))
+    Ok(date)
   }
 }
 
@@ -91,27 +98,38 @@ async fn get_document_at(
   timestamp: Timestamp,
 ) -> Json<Revision> {
   let document = fetch_document(&mut db, identifier).await;
-  let date = timestamp.0.to_rfc3339();
 
-  query_as!(
-    Revision,
-    r#"
-      SELECT
-        *
-      FROM
-        revisions
-      WHERE
-        document_id = ?
-        AND created_at > ?
-      ORDER BY
-        created_at ASC
-    "#,
-    document.id,
-    date
-  )
-  .fetch_one(&mut *db)
-  .await
-  .map_or_else(|_| Json(Revision::default()), |v| Json(v))
+  match timestamp {
+    Timestamp::At(at) => {
+      let date = at.to_rfc3339();
+
+      query_as!(
+        Revision,
+        r#"
+          SELECT
+            *
+          FROM
+            revisions
+          WHERE
+            document_id = ?
+            AND created_at > ?
+          ORDER BY
+            created_at ASC
+        "#,
+        document.id,
+        date
+      )
+      .fetch_one(&mut *db)
+      .await
+      .map_or_else(|_| Json(Revision::default()), |v| Json(v))
+    }
+    Timestamp::Latest => Json(Revision {
+      id: String::new(),
+      document_id: document.id,
+      content: document.content,
+      created_at: document.created_at,
+    }),
+  }
 }
 
 #[post("/documents/<title>")]

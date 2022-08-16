@@ -1,13 +1,12 @@
 #!/bin/bash
 
-rm -rf assets/wiki.db
-
 target="assets/wiki.db"
 query="
   CREATE TABLE documents(
     id TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
+    updated_at DATETIME NOT NULL,
     created_at DATETIME NOT NULL,
     PRIMARY KEY (id)
   );
@@ -22,6 +21,8 @@ query="
       ON DELETE CASCADE
   );
 "
+
+rm -rf $target
 
 sqlite3 \
   "$target" \
