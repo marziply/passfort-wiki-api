@@ -1,7 +1,11 @@
 use chrono::NaiveDateTime;
-use serde::Serialize;
+use rocket::FromForm;
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
+// Wiki page document, always the most recent revision
+// On edit, the current Document data is copied to `revisions`
+// and then the Document is updated with the new content
 #[derive(Debug, Default, Serialize, FromRow)]
 pub struct Document {
   pub id: String,
@@ -11,6 +15,7 @@ pub struct Document {
   pub created_at: NaiveDateTime,
 }
 
+// Individual revision to a document
 #[derive(Debug, Default, Serialize, FromRow)]
 pub struct Revision {
   pub id: String,
@@ -19,8 +24,16 @@ pub struct Revision {
   pub created_at: NaiveDateTime,
 }
 
+// Document and Revision joined as a single response object
 #[derive(Debug, Default, Serialize)]
 pub struct DocumentWithRevisions {
   pub document: Document,
   pub revisions: Vec<Revision>,
+}
+
+// Body data for creating a new Document
+#[derive(Debug, Default, Deserialize, FromForm)]
+pub struct NewDocument {
+  #[field(validate = len(1..50))]
+  pub content: String,
 }
